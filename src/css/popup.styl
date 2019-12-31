@@ -440,14 +440,18 @@ input[type='checkbox'].{css-prefix}checkbox-round + span
   position: relative
   top: 2px
 
-.{css-prefix}popup-edit, .{css-prefix}popup-delete
+.{css-prefix}popup-edit, .{css-prefix}popup-delete, .{css-prefix}popup-confirm
   display: inline-block
   padding: 7px 9px 11px 9px
-  width: calc(50% - 1px)
+  width: calc(33.3% - 1px)
   outline: none
   background: none
   border: none
   cursor: pointer
+
+.{css-prefix}popup-confirm
+  color: red
+  font-weight: bold
 
 .{css-prefix}popup-vertical-line
   background: #e5e5e5

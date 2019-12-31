@@ -1377,6 +1377,26 @@ Calendar.prototype._onBeforeCreate = function(createScheduleData) {
 };
 
 /**
+ * @fires Calendar#beforeConfirmSchedule
+ * @param {object} confirmScheduleData - Confirm schedule data
+ * @private
+ */
+Calendar.prototype._onBeforeConfirm = function(confirmScheduleData) {
+    /**
+     * Fire this event when delete a schedule.
+     * @event Calendar#beforeConfirmSchedule
+     * @type {object}
+     * @property {Schedule} schedule - The {@link Schedule} instance to delete
+     * @example
+     * calendar.on('beforeConfirmSchedule', function(event) {
+     *     var schedule = event.schedule;
+     *     alert('The schedule is confirmed.', schedule);
+     * });
+     */
+    this.fire('beforeConfirmSchedule', confirmScheduleData);
+};
+
+/**
  * @fires Calendar#beforeUpdateSchedule
  * @param {object} updateScheduleData - update {@link Schedule} data
  * @private
@@ -1482,6 +1502,7 @@ Calendar.prototype._toggleViewSchedule = function(isAttach, view) {
     });
 
     util.forEach(handler.creation, function(creationHandler) {
+        creationHandler[method]('beforeConfirmSchedule', self._onBeforeConfirm, self);
         creationHandler[method]('beforeCreateSchedule', self._onBeforeCreate, self);
         creationHandler[method]('beforeDeleteSchedule', self._onBeforeDelete, self);
     });

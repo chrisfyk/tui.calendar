@@ -1,6 +1,6 @@
 /*!
  * TOAST UI Calendar
- * @version 1.12.9 | Mon Dec 30 2019
+ * @version 1.12.9 | Tue Dec 31 2019
  * @author NHN FE Development Lab <dl_javascript@nhn.com>
  * @license MIT
  */
@@ -9561,6 +9561,26 @@ Calendar.prototype._onBeforeCreate = function(createScheduleData) {
 };
 
 /**
+ * @fires Calendar#beforeConfirmSchedule
+ * @param {object} confirmScheduleData - Confirm schedule data
+ * @private
+ */
+Calendar.prototype._onBeforeConfirm = function(confirmScheduleData) {
+    /**
+     * Fire this event when delete a schedule.
+     * @event Calendar#beforeConfirmSchedule
+     * @type {object}
+     * @property {Schedule} schedule - The {@link Schedule} instance to delete
+     * @example
+     * calendar.on('beforeConfirmSchedule', function(event) {
+     *     var schedule = event.schedule;
+     *     alert('The schedule is confirmed.', schedule);
+     * });
+     */
+    this.fire('beforeConfirmSchedule', confirmScheduleData);
+};
+
+/**
  * @fires Calendar#beforeUpdateSchedule
  * @param {object} updateScheduleData - update {@link Schedule} data
  * @private
@@ -9666,6 +9686,7 @@ Calendar.prototype._toggleViewSchedule = function(isAttach, view) {
     });
 
     util.forEach(handler.creation, function(creationHandler) {
+        creationHandler[method]('beforeConfirmSchedule', self._onBeforeConfirm, self);
         creationHandler[method]('beforeCreateSchedule', self._onBeforeCreate, self);
         creationHandler[method]('beforeDeleteSchedule', self._onBeforeDelete, self);
     });
@@ -10492,7 +10513,7 @@ module.exports = function(baseController, layoutContainer, dragHandler, options,
         vpanels = [];
     var weekView, dayNameContainer, dayNameView, vLayoutContainer, vLayout;
     var createView, onSaveNewSchedule, onSetCalendars, lastVPanel;
-    var detailView, onShowDetailPopup, onDeleteSchedule, onShowEditPopup, onEditSchedule;
+    var detailView, onShowDetailPopup, onConfirmSchedule, onDeleteSchedule, onShowEditPopup, onEditSchedule;
     var taskView = options.taskView;
     var scheduleView = options.scheduleView;
     var viewVisibilities = {
@@ -10673,6 +10694,13 @@ module.exports = function(baseController, layoutContainer, dragHandler, options,
 
             detailView.render(eventData);
         };
+        onConfirmSchedule = function(eventData) {
+            if (eventData.isAllDay) {
+                weekView.handler.creation.allday.fire('beforeConfirmSchedule', eventData);
+            } else {
+                weekView.handler.creation.time.fire('beforeConfirmSchedule', eventData);
+            }
+        };
         onDeleteSchedule = function(eventData) {
             if (eventData.isAllDay) {
                 weekView.handler.creation.allday.fire('beforeDeleteSchedule', eventData);
@@ -10704,6 +10732,7 @@ module.exports = function(baseController, layoutContainer, dragHandler, options,
             detailView.on('beforeUpdateSchedule', onEditSchedule);
         }
         detailView.on('beforeDeleteSchedule', onDeleteSchedule);
+        detailView.on('beforeConfirmSchedule', onConfirmSchedule);
     }
 
     weekView.on('afterRender', function() {
@@ -20179,9 +20208,27 @@ ScheduleDetailPopup.prototype.destroy = function() {
 ScheduleDetailPopup.prototype._onClick = function(clickEvent) {
     var target = (clickEvent.target || clickEvent.srcElement);
 
+    this._onClickConfirmSchedule(target);
+
     this._onClickEditSchedule(target);
 
     this._onClickDeleteSchedule(target);
+};
+
+/**
+ * @fires ScheduleDetailPopup#ClickConfirmSchedule
+ * @param {HTMLElement} target - event target
+ */
+ScheduleDetailPopup.prototype._onClickConfirmSchedule = function(target) {
+    var className = config.classname('popup-confirm');
+
+    if (domutil.hasClass(target, className) || domutil.closest(target, '.' + className)) {
+        this.fire('beforeConfirmSchedule', {
+            schedule: this._schedule
+        });
+
+        this.hide();
+    }
 };
 
 /**
@@ -21946,26 +21993,32 @@ module.exports = (Handlebars['default'] || Handlebars).template({"1":function(co
     + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":22,"column":16},"end":{"line":22,"column":30}}}) : helper)))
     + "section-button\">\n      <button class=\""
     + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":23,"column":21},"end":{"line":23,"column":35}}}) : helper)))
-    + "popup-edit\"><span class=\""
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":23,"column":60},"end":{"line":23,"column":74}}}) : helper)))
-    + "icon "
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":23,"column":79},"end":{"line":23,"column":93}}}) : helper)))
-    + "ic-edit\"></span><span class=\""
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":23,"column":122},"end":{"line":23,"column":136}}}) : helper)))
-    + "content\">"
-    + ((stack1 = ((helper = (helper = helpers["popupEdit-tmpl"] || (depth0 != null ? depth0["popupEdit-tmpl"] : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"popupEdit-tmpl","hash":{},"data":data,"loc":{"start":{"line":23,"column":145},"end":{"line":23,"column":165}}}) : helper))) != null ? stack1 : "")
-    + "</span></button>\n      <div class=\""
+    + "popup-confirm\"><span class=\"\"></span><span class=\""
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":23,"column":85},"end":{"line":23,"column":99}}}) : helper)))
+    + "content\">CONFIRM</span></button>\n      <div class=\""
     + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":24,"column":18},"end":{"line":24,"column":32}}}) : helper)))
     + "popup-vertical-line\"></div>\n      <button class=\""
     + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":25,"column":21},"end":{"line":25,"column":35}}}) : helper)))
-    + "popup-delete\"><span class=\""
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":25,"column":62},"end":{"line":25,"column":76}}}) : helper)))
+    + "popup-edit\"><span class=\""
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":25,"column":60},"end":{"line":25,"column":74}}}) : helper)))
     + "icon "
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":25,"column":81},"end":{"line":25,"column":95}}}) : helper)))
-    + "ic-delete\"></span><span class=\""
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":25,"column":126},"end":{"line":25,"column":140}}}) : helper)))
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":25,"column":79},"end":{"line":25,"column":93}}}) : helper)))
+    + "ic-edit\"></span><span class=\""
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":25,"column":122},"end":{"line":25,"column":136}}}) : helper)))
     + "content\">"
-    + ((stack1 = ((helper = (helper = helpers["popupDelete-tmpl"] || (depth0 != null ? depth0["popupDelete-tmpl"] : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"popupDelete-tmpl","hash":{},"data":data,"loc":{"start":{"line":25,"column":149},"end":{"line":25,"column":171}}}) : helper))) != null ? stack1 : "")
+    + ((stack1 = ((helper = (helper = helpers["popupEdit-tmpl"] || (depth0 != null ? depth0["popupEdit-tmpl"] : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"popupEdit-tmpl","hash":{},"data":data,"loc":{"start":{"line":25,"column":145},"end":{"line":25,"column":165}}}) : helper))) != null ? stack1 : "")
+    + "</span></button>\n      <div class=\""
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":26,"column":18},"end":{"line":26,"column":32}}}) : helper)))
+    + "popup-vertical-line\"></div>\n      <button class=\""
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":27,"column":21},"end":{"line":27,"column":35}}}) : helper)))
+    + "popup-delete\"><span class=\""
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":27,"column":62},"end":{"line":27,"column":76}}}) : helper)))
+    + "icon "
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":27,"column":81},"end":{"line":27,"column":95}}}) : helper)))
+    + "ic-delete\"></span><span class=\""
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":27,"column":126},"end":{"line":27,"column":140}}}) : helper)))
+    + "content\">"
+    + ((stack1 = ((helper = (helper = helpers["popupDelete-tmpl"] || (depth0 != null ? depth0["popupDelete-tmpl"] : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"popupDelete-tmpl","hash":{},"data":data,"loc":{"start":{"line":27,"column":149},"end":{"line":27,"column":171}}}) : helper))) != null ? stack1 : "")
     + "</span></button>\n    </div>\n";
 },"compiler":[8,">= 4.3.0"],"main":function(container,depth0,helpers,partials,data) {
     var stack1, helper, alias1=depth0 != null ? depth0 : (container.nullContext || {}), alias2=container.hooks.helperMissing, alias3="function", alias4=container.escapeExpression, alias5=container.lambda;
@@ -22011,21 +22064,21 @@ module.exports = (Handlebars['default'] || Handlebars).template({"1":function(co
     + "        "
     + ((stack1 = helpers["if"].call(alias1,((stack1 = (depth0 != null ? depth0.schedule : depth0)) != null ? stack1.body : stack1),{"name":"if","hash":{},"fn":container.program(11, data, 0),"inverse":container.noop,"data":data,"loc":{"start":{"line":18,"column":8},"end":{"line":18,"column":206}}})) != null ? stack1 : "")
     + "\n    </div>\n"
-    + ((stack1 = helpers["if"].call(alias1,((stack1 = (depth0 != null ? depth0.schedule : depth0)) != null ? stack1.isReadOnly : stack1),{"name":"if","hash":{},"fn":container.program(13, data, 0),"inverse":container.program(15, data, 0),"data":data,"loc":{"start":{"line":20,"column":4},"end":{"line":27,"column":11}}})) != null ? stack1 : "")
+    + ((stack1 = helpers["if"].call(alias1,((stack1 = (depth0 != null ? depth0.schedule : depth0)) != null ? stack1.isReadOnly : stack1),{"name":"if","hash":{},"fn":container.program(13, data, 0),"inverse":container.program(15, data, 0),"data":data,"loc":{"start":{"line":20,"column":4},"end":{"line":29,"column":11}}})) != null ? stack1 : "")
     + "  </div>\n  <div class=\""
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":29,"column":14},"end":{"line":29,"column":28}}}) : helper)))
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":31,"column":14},"end":{"line":31,"column":28}}}) : helper)))
     + "popup-top-line\" style=\"background-color: "
     + alias4(alias5(((stack1 = (depth0 != null ? depth0.schedule : depth0)) != null ? stack1.bgColor : stack1), depth0))
     + "\"></div>\n  <div id=\""
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":30,"column":11},"end":{"line":30,"column":25}}}) : helper)))
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":32,"column":11},"end":{"line":32,"column":25}}}) : helper)))
     + "popup-arrow\" class=\""
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":30,"column":45},"end":{"line":30,"column":59}}}) : helper)))
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":32,"column":45},"end":{"line":32,"column":59}}}) : helper)))
     + "popup-arrow "
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":30,"column":71},"end":{"line":30,"column":85}}}) : helper)))
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":32,"column":71},"end":{"line":32,"column":85}}}) : helper)))
     + "arrow-left\">\n    <div class=\""
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":31,"column":16},"end":{"line":31,"column":30}}}) : helper)))
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":33,"column":16},"end":{"line":33,"column":30}}}) : helper)))
     + "popup-arrow-border\">\n        <div class=\""
-    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":32,"column":20},"end":{"line":32,"column":34}}}) : helper)))
+    + alias4(((helper = (helper = helpers.CSS_PREFIX || (depth0 != null ? depth0.CSS_PREFIX : depth0)) != null ? helper : alias2),(typeof helper === alias3 ? helper.call(alias1,{"name":"CSS_PREFIX","hash":{},"data":data,"loc":{"start":{"line":34,"column":20},"end":{"line":34,"column":34}}}) : helper)))
     + "popup-arrow-fill\"></div>\n    </div>\n  </div>\n</div>\n";
 },"useData":true});
 

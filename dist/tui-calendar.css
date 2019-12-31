@@ -1,6 +1,6 @@
 /*!
  * TOAST UI Calendar
- * @version 1.12.9 | Mon Dec 30 2019
+ * @version 1.12.9 | Tue Dec 31 2019
  * @author NHN FE Development Lab <dl_javascript@nhn.com>
  * @license MIT
  */
@@ -1093,14 +1093,19 @@ input[type='checkbox'].tui-full-calendar-checkbox-round + span {
   top: 2px;
 }
 .tui-full-calendar-popup-edit,
-.tui-full-calendar-popup-delete {
+.tui-full-calendar-popup-delete,
+.tui-full-calendar-popup-confirm {
   display: inline-block;
   padding: 7px 9px 11px 9px;
-  width: calc(50% - 1px);
+  width: calc(33.3% - 1px);
   outline: none;
   background: none;
   border: none;
   cursor: pointer;
+}
+.tui-full-calendar-popup-confirm {
+  color: #f00;
+  font-weight: bold;
 }
 .tui-full-calendar-popup-vertical-line {
   background: #e5e5e5;

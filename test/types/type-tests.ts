@@ -290,6 +290,9 @@ calendar.on({
     beforeDeleteSchedule(eventSechedule) {
         console.log('beforeDeleteSchedule: ', eventSechedule);
     },
+    beforeConfirmSchedule(eventSechedule) {
+        console.log('beforeConfirmSchedule: ', eventSechedule);
+    },
     beforeUpdateSchedule(e) {
         console.log('beforeUpdateSchedule : ', e);
     },

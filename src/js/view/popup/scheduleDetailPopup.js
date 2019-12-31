@@ -73,9 +73,27 @@ ScheduleDetailPopup.prototype.destroy = function() {
 ScheduleDetailPopup.prototype._onClick = function(clickEvent) {
     var target = (clickEvent.target || clickEvent.srcElement);
 
+    this._onClickConfirmSchedule(target);
+
     this._onClickEditSchedule(target);
 
     this._onClickDeleteSchedule(target);
+};
+
+/**
+ * @fires ScheduleDetailPopup#ClickConfirmSchedule
+ * @param {HTMLElement} target - event target
+ */
+ScheduleDetailPopup.prototype._onClickConfirmSchedule = function(target) {
+    var className = config.classname('popup-confirm');
+
+    if (domutil.hasClass(target, className) || domutil.closest(target, '.' + className)) {
+        this.fire('beforeConfirmSchedule', {
+            schedule: this._schedule
+        });
+
+        this.hide();
+    }
 };
 
 /**

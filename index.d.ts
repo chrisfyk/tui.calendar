@@ -32,6 +32,7 @@ export interface IEventScheduleObject {
 export interface IEvents {
     'afterRenderSchedule'?: (eventObj: {schedule: ISchedule}) => void;
     'beforeCreateSchedule'?: (schedule: ISchedule) => void;
+    'beforeConfirmSchedule'?: (eventObj: IEventScheduleObject) => void;
     'beforeDeleteSchedule'?: (eventObj: IEventScheduleObject) => void;
     'beforeUpdateSchedule'?: (eventObj: IEventObject) => void;
     'clickDayname'?: (eventObj: IEventDateObject) => void;
